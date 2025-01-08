@@ -1,6 +1,8 @@
 ## Usage
 ##
 ## make run && make init && make install && make user && make sshd
+## 
+## make upgrade-gcc && make upgrade-cmake 
 ##
 ## Specify the following options from command-line as needed
 ##
@@ -88,3 +90,34 @@ import-container:
 import-image:
 	@docker load < ./exports/$(FILE)
 	@echo "Imported image from ./exports/$(FILE)"
+
+## Upgrade CMake to version 3.22 inside Docker container
+upgrade-cmake:
+	@echo "Upgrading CMake to version 3.22 inside container..."
+	@CMAKE_VERSION=3.22.4
+	@CMAKE_DIR=cmake-3.22.4
+	@CMAKE_FILE=cmake-3.22.4-linux-x86_64.tar.gz
+	@docker exec $(NAME) bash -c "wget https://github.com/Kitware/CMake/releases/download/v3.22.4/cmake-3.22.4-linux-x86_64.tar.gz"
+	@docker exec $(NAME) bash -c "tar -xvf cmake-3.22.4-linux-x86_64.tar.gz"
+	@docker exec $(NAME) bash -c "mv cmake-3.22.4-linux-x86_64 /usr/local/"
+	@docker exec $(NAME) bash -c "ln -sf /usr/local/cmake-3.22.4-linux-x86_64/bin/* /usr/local/bin/"
+	@docker exec $(NAME) bash -c "rm cmake-3.22.4-linux-x86_64.tar.gz"
+	@echo "CMake has been upgraded to version 3.22.4."
+	@docker exec $(NAME) bash -c "cmake --version"
+
+## Upgrade GCC to version 11 inside Docker container
+upgrade-gcc:
+	@echo "Upgrading GCC to version 11 inside container..."
+	@docker exec $(NAME) bash -c "apt update"
+	@docker exec $(NAME) bash -c "apt install -y software-properties-common"
+	@docker exec $(NAME) bash -c "add-apt-repository ppa:ubuntu-toolchain-r/test -y"
+	@docker exec $(NAME) bash -c "apt update"
+	@docker exec $(NAME) bash -c "apt install -y gcc-11 g++-11"
+	@docker exec $(NAME) bash -c "update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100"
+	@docker exec $(NAME) bash -c "update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100"
+	@docker exec $(NAME) bash -c "update-alternatives --set gcc /usr/bin/gcc-11"
+	@docker exec $(NAME) bash -c "update-alternatives --set g++ /usr/bin/g++-11"
+	@echo "GCC has been upgraded to version 11."
+	@docker exec $(NAME) bash -c "gcc --version"
+
+
